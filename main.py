@@ -38,12 +38,40 @@
 # Record реалізує методи для додавання/видалення/редагування об'єктів Phone.
 # AddressBook реалізує метод add_record, який додає Record у self.data.
 
+from collections import UserDict
 
 RECORDS = {}
 
 
-class AddressBook
+class AddressBook(UserDict):
+    pass
 
+
+
+class Field:
+
+    value = ""
+
+    def __init__(self, value):
+        self.value = value
+
+class Records:
+
+    def __init__(self, name):
+        self.name = name
+
+    def add(self):
+        pass
+
+    def delete(self):
+        pass
+
+    def edit(self):
+        pass
+
+
+class Name(Field):
+    name = ""
 
 # Decorators
 
@@ -148,4 +176,8 @@ def bot():
 
 
 if __name__ == '__main__':
+
+    user_name = Name("John")
+    print(user_name.name)
+
     bot()
