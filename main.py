@@ -1,77 +1,53 @@
-# Завдання
-# У цій домашній роботі ми продовжимо розвивати нашого віртуального асистента з CLI інтерфейсом.
-#
-# Наш асистент вже вміє взаємодіяти з користувачем за допомогою командного рядка, отримуючи команди та аргументи та
-# виконуючи потрібні дії. У цьому завданні треба буде попрацювати над внутрішньою логікою асистента, над тим, як
-# зберігаються дані, які саме дані і що з ними можна зробити.
-#
-# Застосуємо для цих цілей об'єктно-орієнтоване програмування. Спершу виділимо декілька сутностей (моделей) з якими
-# працюватимемо.
-#
-# У користувача буде адресна книга або книга контактів. Ця книга контактів містить записи. Кожен запис містить деякий
-# набір полів.
-#
-# Таким чином ми описали сутності (класи), які необхідно реалізувати. Далі розглянемо вимоги до цих класів та встановимо
-# їх взаємозв'язок, правила, за якими вони будуть взаємодіяти.
-#
-# Користувач взаємодіє з книгой контактів, додаючи, видаляючи та редагуючи записи. Також користувач повинен мати
-# можливість шукати в книзі контактів записи за одному або декількома критеріями (полям).
-#
-# Про поля також можна сказати, що вони можуть бути обов'язковими (ім'я) та необов'язковими (телефон або email
-# наприклад). Також записи можуть містити декілька полів одного типу (декілька телефонів наприклад). Користувач повинен
-# мати можливість додавати/видаляти/редагувати поля у будь-якому записі.
-#
-# В цій домашній роботі ви повинні реалізувати такі класи:
-#
-# Клас AddressBook, який успадковується від UserDict, та ми потім додамо логіку пошуку за записами до цього класу.
-# Клас Record, який відповідає за логіку додавання/видалення/редагування необов'язкових полів та зберігання
-# обов'язкового поля Name.
-# Клас Field, який буде батьківським для всіх полів, у ньому потім реалізуємо логіку загальну для всіх полів.
-# Клас Name, обов'язкове поле з ім'ям.
-# Клас Phone, необов'язкове поле з телефоном та таких один запис (Record) може містити кілька.
-# Критерії прийому
-# Реалізовано всі класи із завдання.
-# Записи Record у AddressBook зберігаються як значення у словнику. В якості ключів використовується
-# значення Record.name.value.
-# Record зберігає об'єкт Name в окремому атрибуті.
-# Record зберігає список об'єктів Phone в окремому атрибуті.
-# Record реалізує методи для додавання/видалення/редагування об'єктів Phone.
-# AddressBook реалізує метод add_record, який додає Record у self.data.
-
 from collections import UserDict
-
-RECORDS = {}
 
 
 class AddressBook(UserDict):
-    pass
-
+    def add_record(self, record):
+        self.data[record.name.value] = record
 
 
 class Field:
-
-    value = ""
-
-    def __init__(self, value):
-        self.value = value
-
-class Records:
-
-    def __init__(self, name):
-        self.name = name
-
-    def add(self):
-        pass
-
-    def delete(self):
-        pass
-
-    def edit(self):
-        pass
+    value = None
 
 
 class Name(Field):
-    name = ""
+    def __init__(self, name):
+        self.value = name
+
+
+class Phone(Field):
+    def __init__(self, phone=None):
+        if phone is not None:
+            self.value = phone
+
+
+class Record:
+    name = None
+    phones = []
+
+    def add_phone(self, phone):
+        self.phones.append(Phone(phone))
+
+    def delete_phone(self, phone):
+        for elem in self.phones:
+            if elem.value == phone:
+                self.phones.remove(elem)
+
+    def delete_phone_index(self, index):
+        self.phones.pop(index)
+
+    def edit_phone(self, old_phone, new_phone):
+        for elem in self.phones:
+            if elem.value == old_phone:
+                elem.value = new_phone
+
+    def __init__(self, name, phone=None):
+        self.name = Name(name)
+        self.add_phone(phone)
+
+
+RECORDS = AddressBook()
+
 
 # Decorators
 
@@ -89,7 +65,6 @@ def input_error(func):
 
 # Procedures
 
-
 def hello():
     print("How can I help you?")
 
@@ -102,18 +77,34 @@ def add(*args):
         return
     contact_name = command_list[0]
     contact_phone = command_list[1]
-    RECORDS[contact_name] = contact_phone
+    # RECORDS[contact_name] = contact_phone
+    new_record = Record(contact_name, contact_phone)
+    RECORDS.add_record(new_record)
 
 
 @input_error
-def change(*args):
+def change_phone(*args):
+    command_list = args[0]
+    if not len(command_list) == 3:
+        print("Give me name, old and new phone please")
+        return
+
+    contact_name = command_list[0]
+    contact_old_phone = command_list[1]
+    contact_new_phone = command_list[2]
+    RECORDS[contact_name].edit_phone(contact_old_phone, contact_new_phone)
+
+
+@input_error
+def delete_phone(*args):
     command_list = args[0]
     if not len(command_list) == 2:
         print("Give me name and phone please")
         return
+
     contact_name = command_list[0]
     contact_phone = command_list[1]
-    RECORDS[contact_name] = contact_phone
+    RECORDS[contact_name].delete_phone(contact_phone)
 
 
 @input_error
@@ -130,7 +121,7 @@ def phone(*args):
 @input_error
 def show():
     for key, data in RECORDS.items():
-        print(f"Name: {key} - Phone: {data}")
+        print(f"Name: {key} - Phone: {', '.join(phone.value for phone in data.phones)}")
 
 
 def stop():
@@ -152,14 +143,15 @@ def read_command_list(command_list: list):
 OPERATIONS = {
     'hello': hello,
     'add': add,
-    'change': change,
+    'change': change_phone,
     'phone': phone,
     'show': read_command_list,
     'all': show,
     'good': read_command_list,
     'bye': stop,
     'close': stop,
-    'exit': stop
+    'exit': stop,
+    'delete': delete_phone
 }
 
 
@@ -176,8 +168,4 @@ def bot():
 
 
 if __name__ == '__main__':
-
-    user_name = Name("John")
-    print(user_name.name)
-
     bot()
