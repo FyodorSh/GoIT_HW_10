@@ -7,7 +7,7 @@ class AddressBook(UserDict):
 
 
 class Field:
-    value = None
+    pass
 
 
 class Name(Field):
@@ -16,14 +16,18 @@ class Name(Field):
 
 
 class Phone(Field):
-    def __init__(self, phone=None):
-        if phone is not None:
-            self.value = phone
+    def __init__(self, phone):
+        self.value = phone
 
 
 class Record:
-    name = None
-    phones = []
+
+    def __init__(self, name, phone=None):
+        self.name = Name(name)
+        if phone:
+            self.phones = [Phone(phone)]
+        else:
+            self.phones = []
 
     def add_phone(self, phone):
         self.phones.append(Phone(phone))
@@ -40,10 +44,6 @@ class Record:
         for elem in self.phones:
             if elem.value == old_phone:
                 elem.value = new_phone
-
-    def __init__(self, name, phone=None):
-        self.name = Name(name)
-        self.add_phone(phone)
 
 
 RECORDS = AddressBook()
@@ -77,9 +77,11 @@ def add(*args):
         return
     contact_name = command_list[0]
     contact_phone = command_list[1]
-    # RECORDS[contact_name] = contact_phone
-    new_record = Record(contact_name, contact_phone)
-    RECORDS.add_record(new_record)
+    if not RECORDS.get(contact_name):
+        new_record = Record(contact_name, contact_phone)
+        RECORDS.add_record(new_record)
+    else:
+        RECORDS[contact_name].add_phone(contact_phone)
 
 
 @input_error
